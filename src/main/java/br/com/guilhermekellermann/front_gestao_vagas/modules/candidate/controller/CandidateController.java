@@ -44,7 +44,8 @@ public class CandidateController {
 
         try {
             var token = this.candidateService.login(username, password);
-            var grants = token.getRoles().stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role.toString().toUpperCase())).toList();
+            var grants = token.getRoles().stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toString().toUpperCase())).toList();
 
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(null, null, grants);
             auth.setDetails(token.getAccess_token());
@@ -65,11 +66,15 @@ public class CandidateController {
     @PreAuthorize("hasRole('CANDIDATE')")
     public String profile(Model model) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        var user = this.profileCandidateService.execute(authentication.getDetails().toString());
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            var user = this.profileCandidateService.execute(authentication.getDetails().toString());
 
-        model.addAttribute("user", user);
+            model.addAttribute("user", user);
 
-        return "candidate/profile";
+            return "candidate/profile";
+        } catch (HttpClientErrorException e) {
+            return "redirect:/candidate/login";
+        }
     }
 }
